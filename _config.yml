@@ -6,6 +6,8 @@ title: Learning Notes of NinoDui
 keywords: Java, Python, MapReduce, Spark, AWS
 description: An ample-oriented collection of learning pieces.
 author: NinoDui
+root: /wiki/
+
 deploy:
         - type: git
           remote: origin 
