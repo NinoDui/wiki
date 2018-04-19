@@ -25,13 +25,96 @@
 
 <div class="page_title">Setting Up a Hadoop Cluster</div>
 
-  
+  <p>[toc]</p>
+<h1 id="setting-up-a-hadoop-cluster">Setting up a Hadoop Cluster</h1>
+<h2 id="cluster-specification">Cluster Specification</h2>
+<h3 id="cluster-sizing-to-be-added">Cluster Sizing (to be added)</h3>
+<h3 id="network-topology">Network Topology</h3>
+<p>A common Hadoop cluster architecture consists of a two-level network topology (Rack + Switch)</p>
+<h4 id="rack-awareness">Rack Awareness</h4>
+<h5 id="run-on-single-rack">Run on Single Rack</h5>
+<p>Nothing to do, default.</p>
+<h5 id="run-on-multrirack-clusters">Run on multrirack clusters</h5>
+<p>Network locations (nodes and racks)<br />
+- represented in a tree<br />
+- reflects the network “distance” between locations.<br />
+- The Hadoop configuration <strong>must specify a map between node addresses and network locations</strong>.</p>
+<div class="hlcode"><pre><span class="k">public</span> <span class="nf">interface</span> <span class="nx">DNSToSwitchMapping</span> <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">List</span><span class="o">&lt;</span><span class="kt">String</span><span class="o">&gt;</span> <span class="nx">resolve</span><span class="p">(</span><span class="nb">List</span><span class="o">&lt;</span><span class="kt">String</span><span class="o">&gt;</span> <span class="nx">names</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The <code>net.topology.node.switch.mapping.impl</code> configuration property defines an implementation of the <code>DNSToSwitchMapping</code> interface that the namenode and the resource manager use to <strong>resolve worker node network locations</strong>.</p>
+<ul>
+<li>Default implementation is <code>ScriptBasedMapping</code>, which runs a <strong>user-defined script</strong> to determine the mapping. Most installations don’t need to implement the interface themselves.</li>
+<li>The script’s location is controlled by the property <code>net.topology.script.file.name</code>.</li>
+<li>If <strong>no script location</strong> is specified, the default behavior is to <strong>map all nodes to a single network location</strong>, called <em>/default-rack</em>.</li>
+</ul>
+<h2 id="cluster-setup-and-installation">Cluster Setup and Installation</h2>
+<h3 id="installing-java-skip">Installing Java (Skip)</h3>
+<h3 id="creating-unix-user-accounts">Creating Unix User Accounts</h3>
+<p>The HDFS, MapReduce, and YARN services are usually run as separate users, named <code>hdfs</code>, <code>mapred</code>, and <code>yarn</code>, respectively. They all belong to the same <code>hadoop</code> group.</p>
+<h3 id="installing-hadoop-skip">Installing Hadoop (Skip)</h3>
+<h3 id="configuring-ssh">Configuring SSH</h3>
+<p>Cluster-wide operations performed by:<br />
+- Hadoop control scripts<br />
+- Distributed Shell<br />
+- Dedicated Hadoop management applications</p>
+<div class="hlcode"><pre><span class="n">cat</span> <span class="o">~/</span><span class="p">.</span><span class="n">ssh</span><span class="o">/&lt;</span><span class="n">new</span><span class="o">-</span><span class="n">key</span><span class="o">&gt;</span><span class="p">.</span><span class="n">pub</span> <span class="o">&gt;&gt;</span> <span class="o">~/</span><span class="p">.</span><span class="n">ssh</span><span class="o">/</span><span class="n">authorized_keys</span>
+</pre></div>
+
+
+<h3 id="configuring-hadooplater-in-detail">Configuring Hadoop(Later in Detail)</h3>
+<h3 id="formatting-the-hdfs-filesystem">Formatting the HDFS FileSystem</h3>
+<p>Before it can be used, a brand-new HDFS installation needs to be formatted.<br />
+- Creates an empty filesystem by creating the storage directories and the initial versions of the namenode’s persistent data structures.<br />
+- <strong>Datanodes are not involved in the initial formatting process</strong>, since the namenode manages all of the filesystem’s metadata, and datanodes can join or leave the cluster dynamically.<br />
+- <strong>Don’t need to say how large a filesystem to create</strong>, since this is determined by the number of datanodes in the cluster, which can be increased as needed, long after the filesystem is formatted.</p>
+<div class="hlcode"><pre><span class="n">hdfs</span> <span class="n">namenode</span> <span class="o">-</span><span class="n">format</span>
+</pre></div>
+
+
+<h3 id="starting-and-stopping-the-daemons">Starting and Stopping the Daemons</h3>
+<p>Hadoop comes with <strong>scripts</strong> (in <em>sbin</em>) across the whole cluster for<br />
+- running commands<br />
+- starting and stopping daemons</p>
+<p>To use these scripts, we need to tell Hadoop which machines are in the cluster.<br />
+- <code>slaves</code>, file for this purpose, which contains a list of the machine hostnames or IP addresses, one per line.<br />
+- lists the machines that the datanodes and node managers should run on<br />
+- resides in Hadoop’s configuration directory<br />
+- may be replaced by <code>HADOOP_SLAVES</code> in <code>hadoop-env.sh</code><br />
+- <strong>does not need to be distributed to worker nodes</strong>, since they are used only by the control scripts running on the namenode or resource manager.</p>
+<div class="hlcode"><pre><span class="cp"># Start the HDFS daemon</span>
+<span class="n">start</span><span class="o">-</span><span class="n">dfs</span><span class="p">.</span><span class="n">sh</span>
+
+<span class="cp"># find the namenode&#39;s hostname from fs.defaultFS</span>
+<span class="n">hdfs</span> <span class="n">getconf</span> <span class="o">-</span><span class="n">namenodes</span>
+
+<span class="cp"># Start YARN</span>
+<span class="n">start</span><span class="o">-</span><span class="n">yarn</span><span class="p">.</span><span class="n">sh</span>
+</pre></div>
+
+
+<p>These scripts start and stop Hadoop daemons using the <code>hadoop-daemon.sh</code> script (or the yarn-daemon.sh script, in the case of YARN).<br />
+- If you use the aforementioned scripts, you <strong>shouldn’t</strong> call <code>hadoop-daemon.sh</code> directly.<br />
+- If you need to control Hadoop daemons from another system or from your own scripts, use <code>hadoop-daemon.sh</code> script.</p>
+<h3 id="creating-user-directories">Creating User directories</h3>
+<div class="hlcode"><pre><span class="n">hadoop</span> <span class="n">fs</span> <span class="o">-</span><span class="n">mkdir</span> <span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="n">username</span>
+<span class="n">hadoop</span> <span class="n">fs</span> <span class="o">-</span><span class="n">chown</span> <span class="n">username</span><span class="o">:</span><span class="n">username</span> <span class="o">/</span><span class="n">suer</span><span class="o">/</span><span class="n">username</span>
+
+<span class="cp"># Optional</span>
+<span class="n">hdfs</span> <span class="n">dfsadmin</span> <span class="o">-</span><span class="n">setSpaceQuota</span> <span class="mi">1</span><span class="n">t</span> <span class="o">/</span><span class="n">user</span><span class="o">/</span><span class="n">username</span>
+</pre></div>
+
+
+<h2 id="hadoop-configuration">Hadoop Configuration</h2>
     </div>
     <div id="footer">
       <span>
         <p>Copyright © 2018 NinoDui.
         Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
-        <p>Site Generated 2018-04-18 22:23:30</p>
+        <p>Site Generated 2018-04-19 12:22:23</p>
       </span>
     </div>
 
