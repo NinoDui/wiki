@@ -25,7 +25,39 @@
 
 <div class="page_title">Setting Up a Hadoop Cluster</div>
 
-  <p>[toc]</p>
+  <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#setting-up-a-hadoop-cluster">Setting up a Hadoop Cluster</a><ul>
+<li><a href="#cluster-specification">Cluster Specification</a><ul>
+<li><a href="#cluster-sizing-to-be-added">Cluster Sizing (to be added)</a></li>
+<li><a href="#network-topology">Network Topology</a><ul>
+<li><a href="#rack-awareness">Rack Awareness</a><ul>
+<li><a href="#run-on-single-rack">Run on Single Rack</a></li>
+<li><a href="#run-on-multrirack-clusters">Run on multrirack clusters</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#cluster-setup-and-installation">Cluster Setup and Installation</a><ul>
+<li><a href="#installing-java-skip">Installing Java (Skip)</a></li>
+<li><a href="#creating-unix-user-accounts">Creating Unix User Accounts</a></li>
+<li><a href="#installing-hadoop-skip">Installing Hadoop (Skip)</a></li>
+<li><a href="#configuring-ssh">Configuring SSH</a></li>
+<li><a href="#configuring-hadooplater-in-detail">Configuring Hadoop(Later in Detail)</a></li>
+<li><a href="#formatting-the-hdfs-filesystem">Formatting the HDFS FileSystem</a></li>
+<li><a href="#starting-and-stopping-the-daemons">Starting and Stopping the Daemons</a></li>
+<li><a href="#creating-user-directories">Creating User directories</a></li>
+</ul>
+</li>
+<li><a href="#hadoop-configuration">Hadoop Configuration</a><ul>
+<li><a href="#configuration-management">Configuration Management</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
 <h1 id="setting-up-a-hadoop-cluster">Setting up a Hadoop Cluster</h1>
 <h2 id="cluster-specification">Cluster Specification</h2>
 <h3 id="cluster-sizing-to-be-added">Cluster Sizing (to be added)</h3>
@@ -45,12 +77,10 @@
 </pre></div>
 
 
-<p>The <code>net.topology.node.switch.mapping.impl</code> configuration property defines an implementation of the <code>DNSToSwitchMapping</code> interface that the namenode and the resource manager use to <strong>resolve worker node network locations</strong>.</p>
-<ul>
-<li>Default implementation is <code>ScriptBasedMapping</code>, which runs a <strong>user-defined script</strong> to determine the mapping. Most installations don’t need to implement the interface themselves.</li>
-<li>The script’s location is controlled by the property <code>net.topology.script.file.name</code>.</li>
-<li>If <strong>no script location</strong> is specified, the default behavior is to <strong>map all nodes to a single network location</strong>, called <em>/default-rack</em>.</li>
-</ul>
+<p>The <code>net.topology.node.switch.mapping.impl</code> configuration property defines an implementation of the <code>DNSToSwitchMapping</code> interface that the namenode and the resource manager use to <strong>resolve worker node network locations</strong>.<br />
+- Default implementation is <code>ScriptBasedMapping</code>, which runs a <strong>user-defined script</strong> to determine the mapping. Most installations don’t need to implement the interface themselves.<br />
+- The script’s location is controlled by the property <code>net.topology.script.file.name</code>.<br />
+- If <strong>no script location</strong> is specified, the default behavior is to <strong>map all nodes to a single network location</strong>, called <em>/default-rack</em>.</p>
 <h2 id="cluster-setup-and-installation">Cluster Setup and Installation</h2>
 <h3 id="installing-java-skip">Installing Java (Skip)</h3>
 <h3 id="creating-unix-user-accounts">Creating Unix User Accounts</h3>
@@ -109,12 +139,43 @@
 
 
 <h2 id="hadoop-configuration">Hadoop Configuration</h2>
+<ul>
+<li><code>hadoop-env.sh</code> + <code>mapred-env.sh</code> + <code>yarn-env.sh</code><ul>
+<li>bash script</li>
+<li>Environment variables that are used in the scripts to run Hadoop/MapReduce/YARN</li>
+<li>The last two **overrides the former <code>hadoop-env.sh</code></li>
+</ul>
+</li>
+<li><code>core-site.xml</code> <code>hdfs-site.xml</code> <code>mapred-site.xml</code> <code>yarn-site.xml</code><ul>
+<li>Hadoop Configuration XML</li>
+<li>Configuration settings for Hadoop Core/HDFS Daemons/MapReduce Daemons/YARN Daemons</li>
+</ul>
+</li>
+<li><code>slaves</code><ul>
+<li>Plain text</li>
+<li>A list of machines (one per line) that each run a datanode and a node manager</li>
+</ul>
+</li>
+<li><code>hadoop-metrics2.properties</code> <code>log4j.properties</code><ul>
+<li>Java Properties</li>
+</ul>
+</li>
+<li><code>hadoop-policy.xml</code><ul>
+<li>Configuration settings for access control lists when running Hadoop in secure mode</li>
+</ul>
+</li>
+</ul>
+<p>These files are all found in the <code>etc/hadoop</code> directory of the Hadoop distribution. <br />
+- The configuration directory can be relocated to another part of the filesystems, as long as <br />
+    - daemons are started with the --config option <br />
+    - with the <code>HADOOP_CONF_DIR</code> environment variable set</p>
+<h3 id="configuration-management">Configuration Management</h3>
     </div>
     <div id="footer">
       <span>
         <p>Copyright © 2018 NinoDui.
         Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
-        <p>Site Generated 2018-04-19 12:22:23</p>
+        <p>Site Generated 2018-04-19 12:39:37</p>
       </span>
     </div>
 
