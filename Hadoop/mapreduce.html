@@ -1,0 +1,84 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <link rel="Stylesheet" type="text/css" href="/wiki/static/css/style.css">
+    <link rel="Stylesheet" type="text/css" href="/wiki/static/css/tango.css">
+    <link rel="shortcut icon" href="/wiki/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/wiki/favicon.ico" type="image/x-icon">
+    <link rel="alternate" type="application/atom+xml" href="atom.xml" title="Atom feed">
+    <title>MapReduce - Learning Notes of NinoDui</title>
+    <meta name="keywords" content="Java, Python, MapReduce, Spark, AWS"/>
+    <meta name="description" content="An ample-oriented collection of learning pieces."/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  </head>
+
+  <body>
+    <div id="container">
+      
+<div id="header">
+  <div class="post-nav"><a href="/wiki/">Home</a>&nbsp;&#187;&nbsp;<a href="/wiki/#Hadoop">Hadoop</a>&nbsp;&#187;&nbsp;MapReduce
+    <span class="updated">Page Updated&nbsp;
+      2018-04-19 18:48
+    </span></div>
+</div>
+<div class="clearfix"></div>
+
+<div class="page_title">MapReduce</div>
+
+  <h1 id="mapreduce">MapReduce</h1>
+<div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#mapreduce">MapReduce</a><ul>
+<li><a href="#analyzing-the-data-with-hadoop">Analyzing the Data With Hadoop</a><ul>
+<li><a href="#map-and-reduce">Map and Reduce</a></li>
+<li><a href="#java-mapreduce">Java MapReduce</a></li>
+</ul>
+</li>
+<li><a href="#scaling-out">Scaling Out</a></li>
+<li><a href="#hadoop-streaming">Hadoop Streaming</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<blockquote>
+<p>MapReduce is a programming model for data processing.</p>
+</blockquote>
+<h2 id="analyzing-the-data-with-hadoop">Analyzing the Data With Hadoop</h2>
+<h3 id="map-and-reduce">Map and Reduce</h3>
+<p>MapReduce works by<br />
+- breaking the processing into <code>map</code> phase and <code>reduce</code> phase.<br />
+- Each phase has <strong>key-value pairs as input and output</strong>, their types chosen by the programmer.<br />
+- The map/reduce functions specified by programmer.<br />
+- The output from the map function is processed by the MapReduce framework before being sent to the reduce function. This processing <strong>sorts and groups the key-value pairs by key</strong>.</p>
+<div class="hlcode"><pre><span class="n">public</span> <span class="n">class</span> <span class="n">MyMapper</span> <span class="n">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="n">InKey</span><span class="p">,</span> <span class="n">InValue</span><span class="p">,</span> <span class="n">OutKey</span><span class="p">,</span> <span class="n">OutValue</span><span class="o">&gt;</span> <span class="p">{</span>
+
+<span class="p">}</span>
+</pre></div>
+
+
+<p>When we run this job on a Hadoop cluster, we will <strong>package the code into a JAR file</strong> (which Hadoop will distribute around the cluster).<br />
+Rather than explicitly specifying the name of the JAR file, we can pass a class in the Job’s <code>setJarByClass()</code> method, which Hadoop will use to locate the relevant JAR file by looking for the JAR file containing this class.</p>
+<p>The <strong>Output Path directory shouldn’t exist</strong> before running the job because Hadoop will complain and not run the job.</p>
+<h3 id="java-mapreduce">Java MapReduce</h3>
+<h2 id="scaling-out">Scaling Out</h2>
+<h2 id="hadoop-streaming">Hadoop Streaming</h2>
+  <div class="relation">
+    <h2>Related</h2>
+    <ul>
+    
+    <li><a href="/wiki/Hadoop/setting-up-a-hadoop-cluster.html">Setting Up a Hadoop Cluster</a></li>
+    
+    </ul>
+  </div>
+    </div>
+    <div id="footer">
+      <span>
+        <p>Copyright © 2018 NinoDui.
+        Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
+        <p>Site Generated 2018-04-19 19:10:50</p>
+      </span>
+    </div>
+
+    
+    
+  </body>
+</html>
