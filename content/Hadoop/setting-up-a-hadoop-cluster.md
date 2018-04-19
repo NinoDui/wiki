@@ -3,7 +3,7 @@ title: "Setting Up a Hadoop Cluster"
 date: 2018-04-18 19:54
 ---
 
-[toc]
+[TOC]
 
 # Setting up a Hadoop Cluster
 
@@ -13,23 +13,19 @@ date: 2018-04-18 19:54
 ### Network Topology
 A common Hadoop cluster architecture consists of a two-level network topology (Rack + Switch)
 #### Rack Awareness
-
 ##### Run on Single Rack
 Nothing to do, default.
-
 ##### Run on multrirack clusters
 Network locations (nodes and racks)
 - represented in a tree
 - reflects the network “distance” between locations.
 - The Hadoop configuration **must specify a map between node addresses and network locations**.
-
 ```Java
 public interface DNSToSwitchMapping {
     public List<String> resolve(List<String> names);
 }
 ```
 The `net.topology.node.switch.mapping.impl` configuration property defines an implementation of the `DNSToSwitchMapping` interface that the namenode and the resource manager use to **resolve worker node network locations**.
-
 - Default implementation is `ScriptBasedMapping`, which runs a **user-defined script** to determine the mapping. Most installations don’t need to implement the interface themselves.
 - The script’s location is controlled by the property `net.topology.script.file.name`.
 - If **no script location** is specified, the default behavior is to **map all nodes to a single network location**, called */default-rack*.
@@ -41,12 +37,10 @@ The `net.topology.node.switch.mapping.impl` configuration property defines an im
 The HDFS, MapReduce, and YARN services are usually run as separate users, named `hdfs`, `mapred`, and `yarn`, respectively. They all belong to the same `hadoop` group.
 ### Installing Hadoop (Skip)
 ### Configuring SSH
-
 Cluster-wide operations performed by:
 - Hadoop control scripts
 - Distributed Shell
 - Dedicated Hadoop management applications
-
 ```shell
 cat ~/.ssh/<new-key>.pub >> ~/.ssh/authorized_keys
 ```
@@ -56,11 +50,9 @@ Before it can be used, a brand-new HDFS installation needs to be formatted.
 - Creates an empty filesystem by creating the storage directories and the initial versions of the namenode’s persistent data structures.
 - **Datanodes are not involved in the initial formatting process**, since the namenode manages all of the filesystem’s metadata, and datanodes can join or leave the cluster dynamically.
 - **Don’t need to say how large a filesystem to create**, since this is determined by the number of datanodes in the cluster, which can be increased as needed, long after the filesystem is formatted.
-
 ```Shell
 hdfs namenode -format
 ```
-
 ### Starting and Stopping the Daemons
 Hadoop comes with **scripts** (in *sbin*) across the whole cluster for
 - running commands
@@ -97,3 +89,26 @@ hdfs dfsadmin -setSpaceQuota 1t /user/username
 ```
 
 ## Hadoop Configuration
+
+- `hadoop-env.sh` + `mapred-env.sh` + `yarn-env.sh`
+    - bash script
+    - Environment variables that are used in the scripts to run Hadoop/MapReduce/YARN
+    - The last two **overrides the former `hadoop-env.sh`
+- `core-site.xml` `hdfs-site.xml` `mapred-site.xml` `yarn-site.xml`
+    - Hadoop Configuration XML
+    - Configuration settings for Hadoop Core/HDFS Daemons/MapReduce Daemons/YARN Daemons
+- `slaves`
+    - Plain text
+    - A list of machines (one per line) that each run a datanode and a node manager
+- `hadoop-metrics2.properties` `log4j.properties`
+    - Java Properties
+- `hadoop-policy.xml`
+    - Configuration settings for access control lists when running Hadoop in secure mode
+
+These files are all found in the `etc/hadoop` directory of the Hadoop distribution. 
+- The configuration directory can be relocated to another part of the filesystems, as long as 
+    - daemons are started with the --config option 
+    - with the `HADOOP_CONF_DIR` environment variable set
+
+### Configuration Management
+
