@@ -93,7 +93,7 @@ hdfs dfsadmin -setSpaceQuota 1t /user/username
 - `hadoop-env.sh` + `mapred-env.sh` + `yarn-env.sh`
     - bash script
     - Environment variables that are used in the scripts to run Hadoop/MapReduce/YARN
-    - The last two **overrides the former `hadoop-env.sh`
+    - The last two **overrides** the former `hadoop-env.sh`
 - `core-site.xml` `hdfs-site.xml` `mapred-site.xml` `yarn-site.xml`
     - Hadoop Configuration XML
     - Configuration settings for Hadoop Core/HDFS Daemons/MapReduce Daemons/YARN Daemons
@@ -105,10 +105,70 @@ hdfs dfsadmin -setSpaceQuota 1t /user/username
 - `hadoop-policy.xml`
     - Configuration settings for access control lists when running Hadoop in secure mode
 
-These files are all found in the `etc/hadoop` directory of the Hadoop distribution. 
-- The configuration directory can be relocated to another part of the filesystems, as long as 
-    - daemons are started with the --config option 
+These files are all found in the `etc/hadoop` directory of the Hadoop distribution.
+The configuration directory can be relocated to another part of the filesystems, as long as
+    - daemons are started with the --config option
     - with the `HADOOP_CONF_DIR` environment variable set
 
 ### Configuration Management
 
+Hadoop does **not** have a single, global location for configuration information.
+Each Hadoop node in the cluster has its own set of configuration files, and it is up to administrators to ensure that they are kept in sync across the system. (Hadoop cluster management tools like `Cloudera Manager` and `Apache Ambari` take care of propagating changes across the cluster.)
+
+If expand the cluster with new machines that have a different hardware specification from the existing ones, you need a different configuration, several excellent tools such as `Chef`, `Puppet`, `CFEngine`, and `Bcfg2`.
+
+### Environment Settings
+`mapred-env.sh` and `yarn-env.sh` files override the values set in `hadoop-env.sh`.
+
+#### Java
+
+1. `JAVA_HOME` in `hadoop-env.sh`
+2. `JAVA_HOME` in shell environment variable (if not set in `hadoop-env.sh`)
+
+#### Memory heap size
+- Default, 1000 MB (1GB) to each daemon
+- controlled by `HADOOP_HEAPSIZE` in `hadoop-env.sh`
+
+#### System logfiles
+- Default `$HADOOP_HOME/logs`
+- controlled by `HADOOP_LOG_DIR` in `hadoop-env.sh`
+
+```shell
+export HADOOP_LOG_DIR=/var/log/hadoop
+```
+Each Hadoop daemon running on a machine produces two logfiles.
+- The first
+    - written via log4j, name ends in `.log`
+    - should be the first port of call when diagnosing problems because most application log messages are written here.
+    - The standard Hadoop log4j configuration uses a daily rolling file appender to rotate logfiles.
+    - Old logfiles are never deleted.
+- The second
+    - logfile is the combined standard output and standard error log. name ends in `.out`
+    - rotated only when the daemon is restarted, and only the last five logs are retained.
+    - Old logfiles are suffixed with a number between 1 and 5, with 5 being the oldest file.
+
+#### SSH Settings
+To pass extra options to SSH, define the `HADOOP_SSH_OPTS` environment variable in `hadoop-env.sh`.
+
+### Important Hadoop Daemon Properties
+These properties are set in the Hadoop site files: `core-site.xml`, `hdfs-site.xml`, and `yarn-site.xml`.
+
+To find the actual configuration of a running daemon, visit the `/conf` page on its web server. For example, http://resource-manager-host:8088/conf shows the configuration that the resource manager is running with.
+
+#### HDFS
+`fs.defaultFS`
+- designate one machine as a namenode
+- an HDFS filesystem URI
+    - whose host is the namenode’s host‐name or IP address
+    - whose port is the port that the namenode will listen on for RPCs.
+- If no port is specified, the default of **8020** is used.
+
+#### YARN
+To run YARN, you need to **designate one machine as a resource manager**.
+- set the property `yarn.resourcemanager.hostname` to the hostname or IP address of the machine running the resource manager.
+
+#### Memory Settings in YARN and MapReduce (to be added)
+#### CPU Settings in YARN and MapReduce (to be added)
+
+### Hadoop Daemon Address and Ports
+### Other Hadoop Properties
