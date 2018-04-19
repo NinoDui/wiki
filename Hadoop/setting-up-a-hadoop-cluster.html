@@ -211,12 +211,12 @@ Each Hadoop node in the cluster has its own set of configuration files, and it i
 
 
 <p>Each Hadoop daemon running on a machine produces two logfiles.<br />
-- The first<br />
+<em> The first<br />
     - written via log4j, name ends in <code>.log</code><br />
     - should be the first port of call when diagnosing problems because most application log messages are written here.<br />
     - The standard Hadoop log4j configuration uses a daily rolling file appender to rotate logfiles.<br />
     - Old logfiles are never deleted.<br />
-- The second<br />
+</em> The second<br />
     - logfile is the combined standard output and standard error log. name ends in <code>.out</code><br />
     - rotated only when the daemon is restarted, and only the last five logs are retained.<br />
     - Old logfiles are suffixed with a number between 1 and 5, with 5 being the oldest file.</p>
@@ -227,14 +227,14 @@ Each Hadoop node in the cluster has its own set of configuration files, and it i
 <p>To find the actual configuration of a running daemon, visit the <code>/conf</code> page on its web server. For example, http://resource-manager-host:8088/conf shows the configuration that the resource manager is running with.</p>
 <h4 id="hdfs">HDFS</h4>
 <p><code>fs.defaultFS</code><br />
-- designate one machine as a namenode<br />
-- an HDFS filesystem URI<br />
+<em> designate one machine as a namenode<br />
+</em> an HDFS filesystem URI<br />
     - whose host is the namenode’s host‐name or IP address<br />
     - whose port is the port that the namenode will listen on for RPCs.<br />
-- If no port is specified, the default of <strong>8020</strong> is used.</p>
+* If no port is specified, the default of <strong>8020</strong> is used.</p>
 <h4 id="yarn">YARN</h4>
 <p>To run YARN, you need to <strong>designate one machine as a resource manager</strong>.<br />
-- set the property <code>yarn.resourcemanager.hostname</code> to the hostname or IP address of the machine running the resource manager.</p>
+* set the property <code>yarn.resourcemanager.hostname</code> to the hostname or IP address of the machine running the resource manager.</p>
 <h4 id="memory-settings-in-yarn-and-mapreduce-to-be-added">Memory Settings in YARN and MapReduce (to be added)</h4>
 <h4 id="cpu-settings-in-yarn-and-mapreduce-to-be-added">CPU Settings in YARN and MapReduce (to be added)</h4>
 <h3 id="hadoop-daemon-address-and-ports">Hadoop Daemon Address and Ports</h3>
@@ -244,7 +244,7 @@ Each Hadoop node in the cluster has its own set of configuration files, and it i
       <span>
         <p>Copyright © 2018 NinoDui.
         Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
-        <p>Site Generated 2018-04-19 13:17:25</p>
+        <p>Site Generated 2018-04-19 13:22:01</p>
       </span>
     </div>
 
