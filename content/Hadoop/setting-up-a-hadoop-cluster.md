@@ -139,12 +139,12 @@ If expand the cluster with new machines that have a different hardware specifica
 export HADOOP_LOG_DIR=/var/log/hadoop
 ```
 Each Hadoop daemon running on a machine produces two logfiles.
-* The first
+- The first
     - written via log4j, name ends in `.log`
     - should be the first port of call when diagnosing problems because most application log messages are written here.
     - The standard Hadoop log4j configuration uses a daily rolling file appender to rotate logfiles.
     - Old logfiles are never deleted.
-* The second
+- The second
     - logfile is the combined standard output and standard error log. name ends in `.out`
     - rotated only when the daemon is restarted, and only the last five logs are retained.
     - Old logfiles are suffixed with a number between 1 and 5, with 5 being the oldest file.
@@ -159,15 +159,15 @@ To find the actual configuration of a running daemon, visit the `/conf` page on 
 
 #### HDFS
 `fs.defaultFS`
-* designate one machine as a namenode
-* an HDFS filesystem URI
+- designate one machine as a namenode
+- an HDFS filesystem URI
     - whose host is the namenode’s host‐name or IP address
     - whose port is the port that the namenode will listen on for RPCs.
-* If no port is specified, the default of **8020** is used.
+- If no port is specified, the default of **8020** is used.
 
 #### YARN
 To run YARN, you need to **designate one machine as a resource manager**.
-* set the property `yarn.resourcemanager.hostname` to the hostname or IP address of the machine running the resource manager.
+- set the property `yarn.resourcemanager.hostname` to the hostname or IP address of the machine running the resource manager.
 
 #### Memory Settings in YARN and MapReduce (to be added)
 #### CPU Settings in YARN and MapReduce (to be added)
