@@ -1,0 +1,142 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <link rel="Stylesheet" type="text/css" href="/wiki/static/css/style.css">
+    <link rel="Stylesheet" type="text/css" href="/wiki/static/css/tango.css">
+    <link rel="shortcut icon" href="/wiki/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/wiki/favicon.ico" type="image/x-icon">
+    <link rel="alternate" type="application/atom+xml" href="atom.xml" title="Atom feed">
+    <title>SSH - Learning Notes of NinoDui</title>
+    <meta name="keywords" content="Java, Python, MapReduce, Spark, AWS"/>
+    <meta name="description" content="An ample-oriented collection of learning pieces."/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  </head>
+
+  <body>
+    <div id="container">
+      
+<div id="header">
+  <div class="post-nav"><a href="/wiki/">Home</a>&nbsp;&#187;&nbsp;<a href="/wiki/#Others">Others</a>&nbsp;&#187;&nbsp;SSH
+    <span class="updated">Page Updated&nbsp;
+      2018-04-24 14:42
+    </span></div>
+</div>
+<div class="clearfix"></div>
+
+<div class="page_title">SSH</div>
+
+  <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#ssh">SSH</a><ul>
+<li><a href="#ssh-public-key">SSH Public Key</a><ul>
+<li><a href="#process">Process</a></li>
+<li><a href="#authorized_keys">authorized_keys</a></li>
+</ul>
+</li>
+<li><a href="#remove-actions">Remove Actions</a><ul>
+<li><a href="#file-transfer">File Transfer</a></li>
+<li><a href="#port-forwarding">Port Forwarding</a><ul>
+<li><a href="#local-port-binding">Local Port Binding</a></li>
+<li><a href="#local-forwarding">Local Forwarding</a></li>
+<li><a href="#other-parameters">Other Parameters</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#resources">Resources</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h1 id="ssh">SSH</h1>
+<h2 id="ssh-public-key">SSH Public Key</h2>
+<blockquote>
+<p>用户将自己的公钥储存在远程主机上。登录的时候，远程主机会向用户发送一段随机字符串，用户用自己的私钥加密后，再发回来。远程主机用事先储存的公钥进行解密，如果成功，就证明用户是可信的，直接允许登录shell，不再要求密码。</p>
+</blockquote>
+<h3 id="process">Process</h3>
+<div class="hlcode"><pre><span class="n">ssh</span><span class="o">-</span><span class="n">keygen</span>
+<span class="cp"># Generate Public Key</span>
+
+<span class="n">ssh</span><span class="o">-</span><span class="n">copy</span><span class="o">-</span><span class="n">id</span> <span class="n">user</span><span class="err">@</span><span class="n">host</span>
+<span class="cp"># publish the Public Key to the remote host</span>
+</pre></div>
+
+
+<p>Confirm that:</p>
+<div class="hlcode"><pre><span class="cp"># In /etc/ssh/sshd_config of Remote Host</span>
+<span class="n">RSAAuthentication</span> <span class="n">yes</span>
+<span class="n">PubkeyAuthentication</span> <span class="n">yes</span>
+<span class="n">AuthorizedKeysFile</span> <span class="p">.</span><span class="n">ssh</span><span class="o">/</span><span class="n">authorized_keys</span>
+</pre></div>
+
+
+<p>Restart ssh service of Remote Host</p>
+<div class="hlcode"><pre><span class="n">service</span> <span class="n">ssh</span> <span class="n">restart</span> <span class="err">#</span> <span class="n">ubuntu</span>
+<span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">init</span><span class="p">.</span><span class="n">d</span><span class="o">/</span><span class="n">ssh</span> <span class="n">restart</span> <span class="err">#</span> <span class="n">Debian</span>
+</pre></div>
+
+
+<h3 id="authorized_keys"><code>authorized_keys</code></h3>
+<p>Remote Host saves the public keys into <code>$HOME/.ssh/authorized_keys</code>.<br />
+Public Keys are actually a piece of <strong>String</strong>, which could be appended at the end of <code>authorized_keys</code>.</p>
+<p><code>ssh-copy-id</code> equals to</p>
+<div class="hlcode"><pre><span class="n">ssh</span> <span class="n">user</span><span class="err">@</span><span class="n">host</span> <span class="err">&#39;</span><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="p">.</span><span class="n">ssh</span> <span class="o">&amp;&amp;</span> <span class="n">cat</span> <span class="o">&gt;&gt;</span> <span class="p">.</span><span class="n">ssh</span><span class="o">/</span><span class="n">authorized_keys</span><span class="err">&#39;</span> <span class="o">&lt;</span> <span class="o">~/</span><span class="p">.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_rsa</span><span class="p">.</span><span class="n">pub</span>
+</pre></div>
+
+
+<h2 id="remove-actions">Remove Actions</h2>
+<h3 id="file-transfer">File Transfer</h3>
+<div class="hlcode"><pre><span class="n">cd</span> <span class="o">&amp;&amp;</span> <span class="n">tar</span> <span class="n">czv</span> <span class="n">src</span> <span class="o">|</span> <span class="n">ssh</span> <span class="n">user</span><span class="err">@</span><span class="n">root</span> <span class="err">&#39;</span><span class="n">tar</span> <span class="n">xz</span><span class="err">&#39;</span>
+<span class="cp"># Copy $HOME/src to $HOME/src (Remote)</span>
+
+<span class="n">ssh</span> <span class="n">user</span><span class="err">@</span><span class="n">host</span> <span class="err">&#39;</span><span class="n">tar</span> <span class="n">cz</span> <span class="n">src</span><span class="err">&#39;</span> <span class="o">|</span> <span class="n">tar</span> <span class="n">xzv</span>
+<span class="cp"># Copy $HOME/rc to .</span>
+
+<span class="n">ssh</span> <span class="n">user</span><span class="err">@</span><span class="n">host</span> <span class="err">&#39;</span><span class="n">ps</span> <span class="n">ax</span> <span class="o">|</span> <span class="n">grep</span> <span class="p">[</span><span class="n">h</span><span class="p">]</span><span class="n">ttpd</span><span class="err">&#39;</span>
+</pre></div>
+
+
+<h3 id="port-forwarding">Port Forwarding</h3>
+<h4 id="local-port-binding">Local Port Binding</h4>
+<div class="hlcode"><pre><span class="n">ssh</span> <span class="o">-</span><span class="n">D</span> <span class="mi">8080</span> <span class="n">user</span><span class="err">@</span><span class="n">host</span>
+</pre></div>
+
+
+<h4 id="local-forwarding">Local Forwarding</h4>
+<div class="hlcode"><pre><span class="n">ssh</span> <span class="o">-</span><span class="n">L</span> <span class="o">&lt;</span><span class="n">Local</span> <span class="n">Port</span><span class="o">&gt;:&lt;</span><span class="n">Target</span> <span class="n">Host</span><span class="o">&gt;:&lt;</span><span class="n">Target</span> <span class="n">Port</span><span class="o">&gt;</span> <span class="n">AgentHost</span>
+<span class="cp"># Target Host: regarding to Agent Host</span>
+</pre></div>
+
+
+<div class="hlcode"><pre><span class="n">ssh</span> <span class="o">-</span><span class="n">L</span> <span class="mi">5900</span><span class="o">:</span><span class="n">localhost</span><span class="o">:</span><span class="mi">5900</span> <span class="n">host3</span>
+<span class="cp"># Local:5900 to Host3:5900 (local host is to host3)</span>
+</pre></div>
+
+
+<div class="hlcode"><pre><span class="n">ssh</span> <span class="o">-</span><span class="n">L</span> <span class="mi">9001</span><span class="o">:</span><span class="n">host2</span><span class="o">:</span><span class="mi">22</span> <span class="n">host3</span>
+<span class="n">ssh</span> <span class="o">-</span><span class="n">p</span> <span class="mi">9001</span> <span class="n">localhost</span> <span class="err">#</span> <span class="n">Aquivilant</span> <span class="n">to</span> <span class="n">ssh</span> <span class="n">host2</span>
+</pre></div>
+
+
+<h4 id="other-parameters">Other Parameters</h4>
+<ul>
+<li><code>-D</code> 只打开远程主机，不打开远程Shell</li>
+<li><code>-T</code> 不为当前连接分配TTY</li>
+<li><code>-f</code> ssh连接成功后转入后台运行</li>
+</ul>
+<h2 id="resources">Resources</h2>
+<ul>
+<li><a href="http://www.ruanyifeng.com/blog/2011/12/ssh_remote_login.html">阮一峰ssh笔记</a></li>
+</ul>
+    </div>
+    <div id="footer">
+      <span>
+        <p>Copyright © 2018 NinoDui.
+        Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
+        <p>Site Generated 2018-04-24 15:09:44</p>
+      </span>
+    </div>
+
+    
+    
+  </body>
+</html>
