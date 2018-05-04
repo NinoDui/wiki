@@ -1,0 +1,117 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <link rel="Stylesheet" type="text/css" href="/wiki/static/css/style.css">
+    <link rel="Stylesheet" type="text/css" href="/wiki/static/css/tango.css">
+    <link rel="shortcut icon" href="/wiki/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/wiki/favicon.ico" type="image/x-icon">
+    <link rel="alternate" type="application/atom+xml" href="atom.xml" title="Atom feed">
+    <title>Java-Concurrency - Learning Notes of NinoDui</title>
+    <meta name="keywords" content="Java, Python, MapReduce, Spark, AWS"/>
+    <meta name="description" content="An ample-oriented collection of learning pieces."/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  </head>
+
+  <body>
+    <div id="container">
+      
+<div id="header">
+  <div class="post-nav"><a href="/wiki/">Home</a>&nbsp;&#187;&nbsp;<a href="/wiki/#Java">Java</a>&nbsp;&#187;&nbsp;Java-Concurrency
+    <span class="updated">Page Updated&nbsp;
+      2018-05-04 11:13
+    </span></div>
+</div>
+<div class="clearfix"></div>
+
+<div class="page_title">Java-Concurrency</div>
+
+  <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#concurrency">Concurrency</a><ul>
+<li><a href="#processes-and-threads">Processes and Threads</a><ul>
+<li><a href="#processes">Processes</a></li>
+<li><a href="#threads">Threads</a></li>
+</ul>
+</li>
+<li><a href="#thread-objects">Thread Objects</a><ul>
+<li><a href="#defining-and-starting-a-thread">Defining and Starting a Thread</a></li>
+<li><a href="#pausing-execution-with-sleep">Pausing Execution with Sleep</a></li>
+<li><a href="#interrupts">Interrupts</a><ul>
+<li><a href="#supporting-interruption">Supporting Interruption</a></li>
+<li><a href="#the-interrupt-status-flag">The Interrupt Status Flag</a></li>
+</ul>
+</li>
+<li><a href="#joins">Joins</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<h1 id="concurrency">Concurrency</h1>
+<h2 id="processes-and-threads">Processes and Threads</h2>
+<blockquote>
+<p>In the Java programming language, concurrent programming is mostly concerned with <strong>threads</strong>.</p>
+</blockquote>
+<h3 id="processes">Processes</h3>
+<p>A process generally has a complete, private set of basic run-time resources; <strong>each process has its own memory space</strong>.</p>
+<p>Processes are often seen as synonymous with programs or applications. However, what the user sees as a single application may in fact be a set of cooperating processes.</p>
+<p><em>Inter Process Communication (IPC)</em> resources, such as pipes and sockets, used not just for <strong>communication between processes</strong> on the same/different system.</p>
+<h3 id="threads">Threads</h3>
+<p><em>lightweight processes</em>, both processes and threads provide an execution environment.</p>
+<p>Threads exist within a process — every process has at least one. Threads share the process's resources, including memory and open files.</p>
+<h2 id="thread-objects">Thread Objects</h2>
+<p>Each thread is associated with an instance of the class <code>Thread</code>.</p>
+<p>There are two basic strategies for using Thread objects to create a concurrent application:<br />
+-   directly control thread creation and management, simply instantiate <code>Thread</code> each time the application needs to initiate an asynchronous task.<br />
+-   abstract thread management from the rest of your application, pass the application's tasks to an <em>executor</em>. (High level)</p>
+<h3 id="defining-and-starting-a-thread">Defining and Starting a Thread</h3>
+<p>An application that creates an instance of <code>Thread</code> must provide the code that will <code>run</code> in that thread, via two ways:<br />
+-   Object implements <code>Runnable</code>, passed to the <code>Thread</code> constructor. (<strong>More General</strong>)<br />
+-   Subclass <code>Thread</code><br />
+and then invoke <code>Thread.start</code></p>
+<h3 id="pausing-execution-with-sleep">Pausing Execution with Sleep</h3>
+<p><code>Thread.sleep</code> causes the current thread to suspend execution for a specified period. This is an efficient means of <strong>making processor time available</strong> to the other threads of an application or other applications that might be running on a computer system.</p>
+<h3 id="interrupts">Interrupts</h3>
+<p>An <em>interrupt</em> is an <strong>indication</strong> to a thread that it should stop what it is doing and do something else. A thread sends an interrupt by invoking <code>interrupt</code> on the Thread object for <strong>the thread to be interrupted</strong>.</p>
+<h4 id="supporting-interruption">Supporting Interruption</h4>
+<p>Many methods that throw <code>InterruptedException</code>, such as <code>sleep</code>, are designed to <strong>cancel their current operation and return immediately</strong> when an interrupt is received.</p>
+<div class="hlcode"><pre><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">info</span><span class="p">.</span><span class="n">length</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">try</span> <span class="p">{</span>
+        <span class="n">Thread</span><span class="p">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">4000</span><span class="p">);</span>
+    <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">print</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>If a thread goes a long time without invoking a method that throws <code>InterruptedException</code>, it must <strong>periodically invoke <code>Thread.interrupted</code></strong>, which returns true if an interrupt has been received.</p>
+<div class="hlcode"><pre><span class="k">if</span> <span class="o">(</span><span class="n">Thread</span><span class="o">.</span><span class="na">interrupted</span><span class="o">())</span> <span class="o">{</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nf">InterruptedException</span><span class="o">();</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<h4 id="the-interrupt-status-flag">The Interrupt Status Flag</h4>
+<p>The interrupt mechanism is implemented using an internal flag known as the <em>interrupt status</em>.<br />
+-   <code>Thread.interrupt</code> sets this flag.<br />
+-   static method <code>Thread.interrupted</code>, which thread checks for an interrupt by invoking, interrupt status is <strong>cleared</strong>.<br />
+-   non-static <code>isInterrupted</code> method, used by one thread to query the interrupt status of another, does not change the interrupt status flag.<br />
+-   <strong>any method</strong> that exits by throwing an <code>InterruptedException</code> clears interrupt status when it does so</p>
+<h3 id="joins">Joins</h3>
+<p>The <code>join</code> method allows one thread to <strong>wait for the completion of another</strong>.</p>
+<p>Like <code>sleep</code>, <code>join</code> responds to an interrupt by exiting with an InterruptedException.</p>
+    </div>
+    <div id="footer">
+      <span>
+        <p>Copyright © 2018 NinoDui.
+        Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
+        <p>Site Generated 2018-05-04 11:51:06</p>
+      </span>
+    </div>
+
+    
+    
+  </body>
+</html>
