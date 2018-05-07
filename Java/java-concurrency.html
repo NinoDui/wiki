@@ -43,6 +43,19 @@
 <li><a href="#joins">Joins</a></li>
 </ul>
 </li>
+<li><a href="#synchronization">Synchronization</a><ul>
+<li><a href="#thread-interference">Thread Interference</a></li>
+<li><a href="#memory-consistency-errors">Memory Consistency Errors</a></li>
+<li><a href="#synchronized-methods">Synchronized Methods</a></li>
+<li><a href="#intrinsic-locks-and-synchronization">Intrinsic Locks and Synchronization</a></li>
+<li><a href="#atomic-access">Atomic Access</a></li>
+</ul>
+</li>
+<li><a href="#liveness">Liveness</a><ul>
+<li><a href="#deadlock">Deadlock</a></li>
+<li><a href="#starvation-and-livelock">Starvation and Livelock</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -102,12 +115,63 @@ and then invoke <code>Thread.start</code></p>
 <h3 id="joins">Joins</h3>
 <p>The <code>join</code> method allows one thread to <strong>wait for the completion of another</strong>.</p>
 <p>Like <code>sleep</code>, <code>join</code> responds to an interrupt by exiting with an InterruptedException.</p>
+<h2 id="synchronization">Synchronization</h2>
+<h3 id="thread-interference">Thread Interference</h3>
+<p>Interference happens when two operations, running in different threads, but acting on the same data, <em>interleave</em>. This means that the two operations consist of multiple steps, and the sequences of steps overlap.</p>
+<h3 id="memory-consistency-errors">Memory Consistency Errors</h3>
+<p><em>Memory consistency errors</em> occur when different threads have inconsistent views of what should be the same data. The key to avoiding memory consistency errors is understanding the <strong>happens-before</strong> relationship. This relationship is simply a guarantee that memory writes by one specific statement are visible to another specific statement.</p>
+<p>A list of actions that create happens-before relationships (<a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html#MemoryVisibility">Summary page of the <code>java.util.concurrent</code> package</a>)</p>
+<blockquote>
+<p>The results of a write by one thread are guaranteed to be visible to a read by another thread only if the write operation <strong>happens-before</strong> the read operation.</p>
+</blockquote>
+<ol>
+<li>The <code>synchronized</code> and <code>volatile</code> constructs, as well as the <code>Thread.start()</code> and <code>Thread.join()</code> methods, can form happens-before relationships.</li>
+<li>Each action in a thread happens-before every action in that thread that comes later in the program's order.</li>
+<li>An unlock (<code>synchronized</code> block or method exit) of a monitor happens-before every subsequent lock (<code>synchronized</code> block or method entry) of that same monitor. And because the happens-before relation is transitive, all actions of a thread prior to unlocking happen-before all actions subsequent to any thread locking that monitor.</li>
+<li>A write to a <code>volatile</code> field happens-before every subsequent read of that same field. Writes and reads of <code>volatile</code> fields have <strong>similar memory consistency effects</strong> as entering and exiting monitors, but <strong>do not entail mutual exclusion locking</strong>.</li>
+<li>A call to start on a thread happens-before any action in the started thread.</li>
+<li>All actions in a thread happen-before any other thread successfully returns from a <code>join</code> on that thread.</li>
+</ol>
+<p>(For High Level <em>Happen-before</em>, please refer to the link.)</p>
+<h3 id="synchronized-methods">Synchronized Methods</h3>
+<p>Two basic synchronization idioms:<br />
+1. synchronized methods<br />
+2. synchronized statements (more complex)</p>
+<p>When one thread is executing a synchronized method for an object, all other threads that invoke synchronized methods for the same object block (suspend execution) until the first thread is done with the object. When a synchronized method exits, it automatically establishes a happens-before relationship with any subsequent invocation of a synchronized method for the same object.</p>
+<p>Constructors cannot be synchronized. <code>final</code> fields are important exception, which cannot be modified after the object is constructed, can be safely read through non-synchronized methods, once the object is constructed.</p>
+<h3 id="intrinsic-locks-and-synchronization">Intrinsic Locks and Synchronization</h3>
+<p>Synchronization is built around an internal entity known as the <code>intrinsic lock</code> or <code>monitor lock</code>. When a thread invokes a synchronized method, it automatically acquires the intrinsic lock for that method's object and releases it when the method returns. The lock release occurs even if the return was caused by an uncaught exception. When a static synchronized method is invoked, the thread acquires the intrinsic lock for the <code>Class</code> object associated with the class. Thus access to class's static fields is controlled by a lock that's distinct from the lock for any instance of the class.</p>
+<p>Synchronized statements must <strong>specify the object that provides the intrinsic lock</strong>.</p>
+<div class="hlcode"><pre><span class="n">public</span> <span class="kt">void</span> <span class="nf">addName</span><span class="p">(</span><span class="n">String</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">synchronized</span><span class="p">(</span><span class="n">this</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">lastName</span> <span class="o">=</span> <span class="n">name</span><span class="p">;</span>
+        <span class="n">nameCount</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">nameList</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>A thread cannot acquire a lock owned by another thread.</p>
+<h3 id="atomic-access">Atomic Access</h3>
+<p>An <em>atomic</em> action is one that effectively happens all at once.</p>
+<ul>
+<li>Reads and writes are atomic for reference variables and for most primitive variables (all types except <code>long</code> and <code>double</code>).</li>
+<li>Reads and writes are atomic for all variables declared volatile (including long and double variables).</li>
+</ul>
+<h2 id="liveness">Liveness</h2>
+<p>A concurrent application's ability to execute in a timely manner is known as its <strong>liveness</strong>.</p>
+<h3 id="deadlock">Deadlock</h3>
+<p>Deadlock describes a situation where two or more threads are blocked forever, <strong>waiting for each other</strong>.</p>
+<h3 id="starvation-and-livelock">Starvation and Livelock</h3>
+<p><em>Starvation</em> describes a situation where a thread is unable to gain regular access to shared resources and is unable to make progress. This happens when shared resources are made unavailable for long periods by "greedy" threads.</p>
+<p>A thread often acts in response to the action of another thread. If the other thread's action is also a response to the action of another thread, then <em>livelock</em> may result. As with deadlock, <em>livelocked</em> threads are unable to make further progress. </p>
     </div>
     <div id="footer">
       <span>
         <p>Copyright © 2018 NinoDui.
         Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
-        <p>Site Generated 2018-05-04 11:51:06</p>
+        <p>Site Generated 2018-05-07 11:58:49</p>
       </span>
     </div>
 
