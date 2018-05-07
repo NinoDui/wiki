@@ -56,6 +56,18 @@
 <li><a href="#starvation-and-livelock">Starvation and Livelock</a></li>
 </ul>
 </li>
+<li><a href="#guarded-blocks">Guarded Blocks</a><ul>
+<li><a href="#example-producer-and-consumer-model">Example - Producer and Consumer Model</a></li>
+</ul>
+</li>
+<li><a href="#immutable-objects">Immutable Objects</a><ul>
+<li><a href="#a-strategy-for-defining-immutable-objects">A Strategy for Defining Immutable Objects</a></li>
+</ul>
+</li>
+<li><a href="#high-level-concurrency-objects">High Level Concurrency Objects</a><ul>
+<li><a href="#lock-objects">Lock Objects</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -164,14 +176,237 @@ and then invoke <code>Thread.start</code></p>
 <h3 id="deadlock">Deadlock</h3>
 <p>Deadlock describes a situation where two or more threads are blocked forever, <strong>waiting for each other</strong>.</p>
 <h3 id="starvation-and-livelock">Starvation and Livelock</h3>
-<p><em>Starvation</em> describes a situation where a thread is unable to gain regular access to shared resources and is unable to make progress. This happens when shared resources are made unavailable for long periods by "greedy" threads.</p>
-<p>A thread often acts in response to the action of another thread. If the other thread's action is also a response to the action of another thread, then <em>livelock</em> may result. As with deadlock, <em>livelocked</em> threads are unable to make further progress. </p>
+<p><em>Starvation</em> describes a situation where <strong>a thread is unable to gain regular access to shared resources and is unable to make progress</strong>. This happens when shared resources are made unavailable for long periods by "greedy" threads.</p>
+<p>A thread often acts in response to the action of another thread. If the other thread's action is also a response to the action of another thread, then <em>livelock</em> may result. As with deadlock, <em>livelocked</em> threads are unable to make further progress.</p>
+<h2 id="guarded-blocks">Guarded Blocks</h2>
+<p><em>Guarded block</em>, a block begins by polling a condition that must be true before the block can proceed.</p>
+<p>Waiting for a variable as a signal is wasteful, since it executes continuously waiting. A more efficient guard invokes <code>Object.wait</code> to <strong>suspend the current thread</strong>. The invocation of <code>wait</code> does not return until <strong>another thread has issued a notification</strong> that some special event may have occurred.</p>
+<div class="hlcode"><pre><span class="n">public</span> <span class="n">synchronized</span> <span class="kt">void</span> <span class="nf">guardedJoy</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">joy</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">try</span> <span class="p">{</span>
+            <span class="n">wait</span><span class="p">();</span>
+        <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{}</span>
+    <span class="p">}</span>
+    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s">&quot;Done!&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Reason why the method is <code>synchronized</code>: Invoking <code>wait</code> inside a synchronized method is a simple way to <strong>acquire the intrinsic lock</strong>. When wait is invoked, the thread releases the lock and suspends execution. At some future time, <strong>another thread will acquire the same lock</strong> and invoke <code>Object.notifyAll</code>, informing all threads waiting on that lock that something important has happened</p>
+<div class="hlcode"><pre><span class="n">public</span> <span class="n">synchronized</span> <span class="nf">notifyJoy</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">joy</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="n">notifyAll</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Some time after the second thread has released the lock, the first thread reacquires the lock and <strong>resumes by returning from the invocation of wait</strong>.</p>
+<h3 id="example-producer-and-consumer-model">Example - Producer and Consumer Model</h3>
+<div class="hlcode"><pre><span class="c1">// Data model</span>
+<span class="n">public</span> <span class="k">class</span> <span class="n">Drop</span> <span class="p">{</span>
+    <span class="n">private</span> <span class="n">String</span> <span class="n">message</span><span class="p">;</span>
+    <span class="n">private</span> <span class="n">boolean</span> <span class="n">isEmpty</span> <span class="o">=</span> <span class="n">true</span><span class="p">;</span>
+
+    <span class="n">public</span> <span class="n">synchronized</span> <span class="n">String</span> <span class="n">take</span><span class="p">()</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">isEmpty</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">try</span> <span class="p">{</span>
+                <span class="k">wait</span><span class="p">();</span>
+            <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">isEmpty</span> <span class="o">=</span> <span class="n">true</span><span class="p">;</span>
+        <span class="n">notifyAll</span><span class="p">();</span>
+        <span class="k">return</span> <span class="n">message</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">public</span> <span class="n">synchronized</span> <span class="k">void</span> <span class="n">put</span><span class="p">(</span><span class="n">String</span> <span class="n">message</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">isEmpty</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">try</span> <span class="p">{</span>
+                <span class="k">wait</span><span class="p">();</span>
+            <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{}</span>
+        <span class="p">}</span>
+        <span class="n">isEmpty</span> <span class="o">=</span> <span class="n">false</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span><span class="p">;</span>
+        <span class="n">notifyAll</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Producer</span>
+<span class="kn">import</span> <span class="nn">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">Random</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">com</span><span class="p">.</span><span class="n">amazon</span><span class="p">.</span><span class="n">ayxu</span><span class="p">.</span><span class="n">utils</span><span class="p">.</span><span class="n">RandomGenerator</span><span class="p">;</span>
+
+<span class="n">public</span> <span class="k">class</span> <span class="n">Producer</span> <span class="n">implements</span> <span class="n">Runnable</span> <span class="p">{</span>
+    <span class="n">private</span> <span class="n">Drop</span> <span class="n">drop</span><span class="p">;</span>
+
+    <span class="n">public</span> <span class="n">Producer</span><span class="p">(</span><span class="n">Drop</span> <span class="n">drop</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">drop</span> <span class="o">=</span> <span class="n">drop</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">@</span><span class="n">Override</span>
+    <span class="n">public</span> <span class="k">void</span> <span class="n">run</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">String</span><span class="p">[]</span> <span class="n">info</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="p">[</span><span class="mh">4</span><span class="p">];</span>
+        <span class="k">for</span> <span class="p">(</span><span class="k">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mh">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mh">4</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">info</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">RandomGenerator</span><span class="p">.</span><span class="n">fakeString</span><span class="p">(</span><span class="mh">4</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">Random</span> <span class="n">random</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Random</span><span class="p">();</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="k">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mh">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">info</span><span class="p">.</span><span class="n">length</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">drop</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+            <span class="n">try</span> <span class="p">{</span>
+                <span class="n">Thread</span><span class="p">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">random</span><span class="p">.</span><span class="n">nextInt</span><span class="p">(</span><span class="mh">5000</span><span class="p">));</span>
+            <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{}</span>
+        <span class="p">}</span>
+
+        <span class="n">drop</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="s">&quot;Done!&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Consumer</span>
+<span class="c1">// import java.util.Random;</span>
+
+<span class="n">public</span> <span class="k">class</span> <span class="n">Consumer</span> <span class="n">implements</span> <span class="n">Runnable</span> <span class="p">{</span>
+
+    <span class="n">private</span> <span class="n">Drop</span> <span class="n">drop</span><span class="p">;</span>
+
+    <span class="n">public</span> <span class="n">Consumer</span><span class="p">(</span><span class="n">Drop</span> <span class="n">drop</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">drop</span> <span class="o">=</span> <span class="n">drop</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">@</span><span class="n">Override</span>
+    <span class="n">public</span> <span class="k">void</span> <span class="n">run</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">Random</span> <span class="n">random</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Random</span><span class="p">();</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">String</span> <span class="n">message</span> <span class="o">=</span> <span class="n">drop</span><span class="p">.</span><span class="n">take</span><span class="p">();</span> <span class="o">!</span><span class="p">(</span><span class="n">message</span><span class="p">.</span><span class="n">equals</span><span class="p">(</span><span class="s">&quot;Done!&quot;</span><span class="p">));</span> <span class="n">message</span> <span class="o">=</span> <span class="n">drop</span><span class="p">.</span><span class="n">take</span><span class="p">())</span> <span class="p">{</span>
+            <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">format</span><span class="p">(</span><span class="s">&quot;Message Received: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">);</span>
+            <span class="n">try</span> <span class="p">{</span>
+                <span class="n">Thread</span><span class="p">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">random</span><span class="p">.</span><span class="n">nextInt</span><span class="p">(</span><span class="mh">5000</span><span class="p">));</span>
+            <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Main</span>
+<span class="n">public</span> <span class="k">class</span> <span class="n">ProducerConsumerExample</span> <span class="p">{</span>
+
+    <span class="n">Drop</span> <span class="n">drop</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Drop</span><span class="p">();</span>
+
+    <span class="n">public</span> <span class="k">static</span> <span class="k">void</span> <span class="n">main</span><span class="p">(</span><span class="n">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">Drop</span> <span class="n">drop</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Drop</span><span class="p">();</span>
+        <span class="p">(</span><span class="k">new</span> <span class="n">Thread</span><span class="p">(</span><span class="k">new</span> <span class="n">Producer</span><span class="p">(</span><span class="n">drop</span><span class="p">))).</span><span class="n">start</span><span class="p">();</span>
+        <span class="p">(</span><span class="k">new</span> <span class="n">Thread</span><span class="p">(</span><span class="k">new</span> <span class="n">Consumer</span><span class="p">(</span><span class="n">drop</span><span class="p">))).</span><span class="n">start</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2 id="immutable-objects">Immutable Objects</h2>
+<p>An object is considered <em>immutable</em> if <strong>its state cannot change after it is constructed</strong>.</p>
+<h3 id="a-strategy-for-defining-immutable-objects">A Strategy for Defining Immutable Objects</h3>
+<p>Several Strategies:</p>
+<ol>
+<li>Don't provide "<code>setter</code>" methods — methods that modify fields or objects referred to by fields.</li>
+<li>Make all fields final and private.</li>
+<li>Don't allow subclasses to override methods. The simplest way to do this is to declare the class as final. A more sophisticated approach is to make the constructor private and construct instances in factory methods.</li>
+<li>If the instance fields include references to mutable objects, don't allow those objects to be changed:<ul>
+<li>Don't provide methods that modify the mutable objects.</li>
+<li>Don't share references to the mutable objects. Never store references to external, mutable objects passed to the constructor; if necessary, create copies, and store references to the copies. Similarly, create copies of your internal mutable objects when necessary to avoid returning the originals in your methods.</li>
+</ul>
+</li>
+</ol>
+<h2 id="high-level-concurrency-objects">High Level Concurrency Objects</h2>
+<h3 id="lock-objects">Lock Objects</h3>
+<p>As with implicit locks, only <strong>one thread</strong> can own a <code>Lock</code> object at a time. <code>Lock</code> objects also support a <code>wait/notify</code> mechanism, through their associated <code>Condition</code> objects.</p>
+<div class="hlcode"><pre><span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">Random</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">concurrent</span><span class="p">.</span><span class="n">locks</span><span class="p">.</span><span class="n">Lock</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">concurrent</span><span class="p">.</span><span class="n">locks</span><span class="p">.</span><span class="n">ReentrantLock</span><span class="p">;</span>
+
+<span class="n">public</span> <span class="n">class</span> <span class="n">SafeLock</span> <span class="p">{</span>
+    <span class="k">static</span> <span class="n">class</span> <span class="n">Friend</span> <span class="p">{</span>
+        <span class="n">private</span> <span class="n">final</span> <span class="n">String</span> <span class="n">name</span><span class="p">;</span>
+        <span class="n">private</span> <span class="n">final</span> <span class="n">Lock</span> <span class="n">lock</span> <span class="o">=</span> <span class="n">new</span> <span class="n">ReentrantLock</span><span class="p">();</span>
+
+        <span class="n">public</span> <span class="nf">Friend</span><span class="p">(</span><span class="n">String</span> <span class="n">name</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">this</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">public</span> <span class="n">String</span> <span class="nf">getName</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="n">this</span><span class="p">.</span><span class="n">name</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">public</span> <span class="n">boolean</span> <span class="nf">impendingBow</span><span class="p">(</span><span class="n">Friend</span> <span class="n">bower</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">boolean</span> <span class="n">myLock</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="n">boolean</span> <span class="n">yourLock</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="n">try</span> <span class="p">{</span>
+                <span class="n">myLock</span> <span class="o">=</span> <span class="n">lock</span><span class="p">.</span><span class="n">tryLock</span><span class="p">();</span>
+                <span class="n">yourLock</span> <span class="o">=</span> <span class="n">bower</span><span class="p">.</span><span class="n">lock</span><span class="p">.</span><span class="n">tryLock</span><span class="p">();</span>
+            <span class="p">}</span> <span class="n">finally</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">myLock</span> <span class="o">&amp;&amp;</span> <span class="n">yourLock</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">myLock</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">lock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+                    <span class="p">}</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">yourLock</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">bower</span><span class="p">.</span><span class="n">lock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">myLock</span> <span class="o">&amp;&amp;</span> <span class="n">yourLock</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">public</span> <span class="kt">void</span> <span class="nf">bow</span><span class="p">(</span><span class="n">Friend</span> <span class="n">bower</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">impendingBow</span><span class="p">(</span><span class="n">bower</span><span class="p">))</span> <span class="p">{</span>
+                <span class="n">try</span> <span class="p">{</span>
+                    <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">format</span><span class="p">(</span><span class="s">&quot;%s: %s has bowed to me!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">this</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">bower</span><span class="p">.</span><span class="n">getName</span><span class="p">());</span>
+                    <span class="n">bower</span><span class="p">.</span><span class="n">bowBack</span><span class="p">(</span><span class="n">this</span><span class="p">);</span>
+                <span class="p">}</span> <span class="n">finally</span> <span class="p">{</span>
+                    <span class="n">lock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+                    <span class="n">bower</span><span class="p">.</span><span class="n">lock</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">format</span><span class="p">(</span><span class="s">&quot;%s: %s started to bow to me, but saw that I was already bowing to him.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">this</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">bower</span><span class="p">.</span><span class="n">getName</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="n">public</span> <span class="kt">void</span> <span class="nf">bowBack</span><span class="p">(</span><span class="n">Friend</span> <span class="n">bower</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">format</span><span class="p">(</span><span class="s">&quot;%s: %s has bowed back to me!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">this</span><span class="p">.</span><span class="n">name</span><span class="p">,</span> <span class="n">bower</span><span class="p">.</span><span class="n">getName</span><span class="p">());</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="n">class</span> <span class="n">BowLoop</span> <span class="n">implements</span> <span class="n">Runnable</span> <span class="p">{</span>
+        <span class="n">private</span> <span class="n">Friend</span> <span class="n">bower</span><span class="p">;</span>
+        <span class="n">private</span> <span class="n">Friend</span> <span class="n">bowee</span><span class="p">;</span>
+
+        <span class="n">public</span> <span class="nf">BowLoop</span><span class="p">(</span><span class="n">Friend</span> <span class="n">bower</span><span class="p">,</span> <span class="n">Friend</span> <span class="n">bowee</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">this</span><span class="p">.</span><span class="n">bowee</span> <span class="o">=</span> <span class="n">bowee</span><span class="p">;</span>
+            <span class="n">this</span><span class="p">.</span><span class="n">bower</span> <span class="o">=</span> <span class="n">bower</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
+            <span class="n">Random</span> <span class="n">random</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Random</span><span class="p">();</span>
+            <span class="k">for</span> <span class="p">(;;)</span> <span class="p">{</span>
+                <span class="n">try</span> <span class="p">{</span>
+                    <span class="n">Thread</span><span class="p">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">random</span><span class="p">.</span><span class="n">nextInt</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
+                <span class="p">}</span> <span class="n">catch</span> <span class="p">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="p">)</span> <span class="p">{}</span>
+                <span class="n">bowee</span><span class="p">.</span><span class="n">bow</span><span class="p">(</span><span class="n">bower</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">public</span> <span class="k">static</span> <span class="kt">void</span> <span class="n">main</span><span class="p">(</span><span class="n">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">final</span> <span class="n">Friend</span> <span class="n">a</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Friend</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">);</span>
+        <span class="n">final</span> <span class="n">Friend</span> <span class="n">b</span> <span class="o">=</span> <span class="n">new</span> <span class="n">Friend</span><span class="p">(</span><span class="s">&quot;B&quot;</span><span class="p">);</span>
+        <span class="n">new</span> <span class="nf">Thread</span><span class="p">(</span><span class="n">new</span> <span class="n">BowLoop</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)).</span><span class="n">start</span><span class="p">();</span>
+        <span class="n">new</span> <span class="nf">Thread</span><span class="p">(</span><span class="n">new</span> <span class="n">BowLoop</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)).</span><span class="n">start</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
     </div>
     <div id="footer">
       <span>
         <p>Copyright © 2018 NinoDui.
         Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
-        <p>Site Generated 2018-05-07 11:58:49</p>
+        <p>Site Generated 2018-05-07 15:27:27</p>
       </span>
     </div>
 
