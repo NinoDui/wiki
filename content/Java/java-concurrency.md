@@ -155,6 +155,239 @@ Deadlock describes a situation where two or more threads are blocked forever, **
 
 ### Starvation and Livelock
 
-*Starvation* describes a situation where a thread is unable to gain regular access to shared resources and is unable to make progress. This happens when shared resources are made unavailable for long periods by "greedy" threads.
+*Starvation* describes a situation where **a thread is unable to gain regular access to shared resources and is unable to make progress**. This happens when shared resources are made unavailable for long periods by "greedy" threads.
 
-A thread often acts in response to the action of another thread. If the other thread's action is also a response to the action of another thread, then *livelock* may result. As with deadlock, *livelocked* threads are unable to make further progress. 
+A thread often acts in response to the action of another thread. If the other thread's action is also a response to the action of another thread, then *livelock* may result. As with deadlock, *livelocked* threads are unable to make further progress.
+
+## Guarded Blocks
+
+*Guarded block*, a block begins by polling a condition that must be true before the block can proceed.
+
+Waiting for a variable as a signal is wasteful, since it executes continuously waiting. A more efficient guard invokes `Object.wait` to **suspend the current thread**. The invocation of `wait` does not return until **another thread has issued a notification** that some special event may have occurred.
+
+```Java
+public synchronized void guardedJoy() {
+    while (!joy) {
+        try {
+            wait();
+        } catch (InterruptedException e) {}
+    }
+    System.out.println("Done!");
+}
+```
+Reason why the method is `synchronized`: Invoking `wait` inside a synchronized method is a simple way to **acquire the intrinsic lock**. When wait is invoked, the thread releases the lock and suspends execution. At some future time, **another thread will acquire the same lock** and invoke `Object.notifyAll`, informing all threads waiting on that lock that something important has happened
+
+```Java
+public synchronized notifyJoy() {
+    joy = true;
+    notifyAll();
+}
+```
+Some time after the second thread has released the lock, the first thread reacquires the lock and **resumes by returning from the invocation of wait**.
+
+### Example - Producer and Consumer Model
+
+```Java
+// Data model
+public class Drop {
+    private String message;
+    private boolean isEmpty = true;
+
+    public synchronized String take() {
+        while (isEmpty) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        isEmpty = true;
+        notifyAll();
+        return message;
+    }
+
+    public synchronized void put(String message) {
+        while (!isEmpty) {
+            try {
+                wait();
+            } catch (InterruptedException e) {}
+        }
+        isEmpty = false;
+        this.message = message;
+        notifyAll();
+    }
+}
+
+// Producer
+import java.util.Random;
+import com.amazon.ayxu.utils.RandomGenerator;
+
+public class Producer implements Runnable {
+    private Drop drop;
+
+    public Producer(Drop drop) {
+        this.drop = drop;
+    }
+
+    @Override
+    public void run() {
+        String[] info = new String[4];
+        for (int i = 0; i < 4; ++i) {
+            info[i] = RandomGenerator.fakeString(4);
+        }
+        Random random = new Random();
+
+        for (int i = 0; i < info.length; ++i) {
+            drop.put(info[i]);
+            try {
+                Thread.sleep(random.nextInt(5000));
+            } catch (InterruptedException e) {}
+        }
+
+        drop.put("Done!");
+    }
+}
+
+// Consumer
+// import java.util.Random;
+
+public class Consumer implements Runnable {
+
+    private Drop drop;
+
+    public Consumer(Drop drop) {
+        this.drop = drop;
+    }
+
+    @Override
+    public void run() {
+        Random random = new Random();
+        for (String message = drop.take(); !(message.equals("Done!")); message = drop.take()) {
+            System.out.format("Message Received: %s\n", message);
+            try {
+                Thread.sleep(random.nextInt(5000));
+            } catch (InterruptedException e) {
+            }
+        }
+
+    }
+}
+
+// Main
+public class ProducerConsumerExample {
+
+    Drop drop = new Drop();
+
+    public static void main(String[] args) {
+        Drop drop = new Drop();
+        (new Thread(new Producer(drop))).start();
+        (new Thread(new Consumer(drop))).start();
+    }
+}
+```
+
+## Immutable Objects
+An object is considered *immutable* if **its state cannot change after it is constructed**.
+
+### A Strategy for Defining Immutable Objects
+
+Several Strategies:
+
+1. Don't provide "`setter`" methods — methods that modify fields or objects referred to by fields.
+2. Make all fields final and private.
+3. Don't allow subclasses to override methods. The simplest way to do this is to declare the class as final. A more sophisticated approach is to make the constructor private and construct instances in factory methods.
+4. If the instance fields include references to mutable objects, don't allow those objects to be changed:
+    - Don't provide methods that modify the mutable objects.
+    - Don't share references to the mutable objects. Never store references to external, mutable objects passed to the constructor; if necessary, create copies, and store references to the copies. Similarly, create copies of your internal mutable objects when necessary to avoid returning the originals in your methods.
+
+
+## High Level Concurrency Objects
+
+### Lock Objects
+
+As with implicit locks, only **one thread** can own a `Lock` object at a time. `Lock` objects also support a `wait/notify` mechanism, through their associated `Condition` objects.
+
+```Java
+import java.util.Random;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class SafeLock {
+    static class Friend {
+        private final String name;
+        private final Lock lock = new ReentrantLock();
+
+        public Friend(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public boolean impendingBow(Friend bower) {
+            boolean myLock = false;
+            boolean yourLock = false;
+            try {
+                myLock = lock.tryLock();
+                yourLock = bower.lock.tryLock();
+            } finally {
+                if (!(myLock && yourLock)) {
+                    if (myLock) {
+                        lock.unlock();
+                    }
+                    if (yourLock) {
+                        bower.lock.unlock();
+                    }
+                }
+            }
+            return myLock && yourLock;
+        }
+
+        public void bow(Friend bower) {
+            if (!impendingBow(bower)) {
+                try {
+                    System.out.format("%s: %s has bowed to me!\n", this.name, bower.getName());
+                    bower.bowBack(this);
+                } finally {
+                    lock.unlock();
+                    bower.lock.unlock();
+                }
+            } else {
+                System.out.format("%s: %s started to bow to me, but saw that I was already bowing to him.\n", this.name, bower.getName());
+            }
+        }
+
+        public void bowBack(Friend bower) {
+            System.out.format("%s: %s has bowed back to me!\n", this.name, bower.getName());
+        }
+    }
+
+    static class BowLoop implements Runnable {
+        private Friend bower;
+        private Friend bowee;
+
+        public BowLoop(Friend bower, Friend bowee) {
+            this.bowee = bowee;
+            this.bower = bower;
+        }
+
+        public void run() {
+            Random random = new Random();
+            for (;;) {
+                try {
+                    Thread.sleep(random.nextInt(10));
+                } catch (InterruptedException e) {}
+                bowee.bow(bower);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        final Friend a = new Friend("A");
+        final Friend b = new Friend("B");
+        new Thread(new BowLoop(a, b)).start();
+        new Thread(new BowLoop(b, a)).start();
+    }
+}
+```
