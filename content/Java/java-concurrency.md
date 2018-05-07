@@ -86,3 +86,75 @@ The interrupt mechanism is implemented using an internal flag known as the *inte
 The `join` method allows one thread to **wait for the completion of another**.
 
 Like `sleep`, `join` responds to an interrupt by exiting with an InterruptedException.
+
+## Synchronization
+
+### Thread Interference
+
+Interference happens when two operations, running in different threads, but acting on the same data, *interleave*. This means that the two operations consist of multiple steps, and the sequences of steps overlap.
+
+### Memory Consistency Errors
+
+*Memory consistency errors* occur when different threads have inconsistent views of what should be the same data. The key to avoiding memory consistency errors is understanding the **happens-before** relationship. This relationship is simply a guarantee that memory writes by one specific statement are visible to another specific statement.
+
+A list of actions that create happens-before relationships ([Summary page of the `java.util.concurrent` package](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html#MemoryVisibility))
+
+> The results of a write by one thread are guaranteed to be visible to a read by another thread only if the write operation **happens-before** the read operation.
+
+1.  The `synchronized` and `volatile` constructs, as well as the `Thread.start()` and `Thread.join()` methods, can form happens-before relationships.
+2. Each action in a thread happens-before every action in that thread that comes later in the program's order.
+3. An unlock (`synchronized` block or method exit) of a monitor happens-before every subsequent lock (`synchronized` block or method entry) of that same monitor. And because the happens-before relation is transitive, all actions of a thread prior to unlocking happen-before all actions subsequent to any thread locking that monitor.
+4. A write to a `volatile` field happens-before every subsequent read of that same field. Writes and reads of `volatile` fields have **similar memory consistency effects** as entering and exiting monitors, but **do not entail mutual exclusion locking**.
+5. A call to start on a thread happens-before any action in the started thread.
+6. All actions in a thread happen-before any other thread successfully returns from a `join` on that thread.
+
+(For High Level *Happen-before*, please refer to the link.)
+
+### Synchronized Methods
+
+Two basic synchronization idioms:
+1. synchronized methods
+2. synchronized statements (more complex)
+
+When one thread is executing a synchronized method for an object, all other threads that invoke synchronized methods for the same object block (suspend execution) until the first thread is done with the object. When a synchronized method exits, it automatically establishes a happens-before relationship with any subsequent invocation of a synchronized method for the same object.
+
+Constructors cannot be synchronized. `final` fields are important exception, which cannot be modified after the object is constructed, can be safely read through non-synchronized methods, once the object is constructed.
+
+### Intrinsic Locks and Synchronization
+
+Synchronization is built around an internal entity known as the `intrinsic lock` or `monitor lock`. When a thread invokes a synchronized method, it automatically acquires the intrinsic lock for that method's object and releases it when the method returns. The lock release occurs even if the return was caused by an uncaught exception. When a static synchronized method is invoked, the thread acquires the intrinsic lock for the `Class` object associated with the class. Thus access to class's static fields is controlled by a lock that's distinct from the lock for any instance of the class.
+
+Synchronized statements must **specify the object that provides the intrinsic lock**.
+
+```Java
+public void addName(String name) {
+    synchronized(this) {
+        lastName = name;
+        nameCount++;
+    }
+    nameList.add(name);
+}
+```
+
+A thread cannot acquire a lock owned by another thread.
+
+### Atomic Access
+
+An *atomic* action is one that effectively happens all at once.
+
+- Reads and writes are atomic for reference variables and for most primitive variables (all types except `long` and `double`).
+- Reads and writes are atomic for all variables declared volatile (including long and double variables).
+
+## Liveness
+
+A concurrent application's ability to execute in a timely manner is known as its **liveness**.
+
+### Deadlock
+
+Deadlock describes a situation where two or more threads are blocked forever, **waiting for each other**.
+
+### Starvation and Livelock
+
+*Starvation* describes a situation where a thread is unable to gain regular access to shared resources and is unable to make progress. This happens when shared resources are made unavailable for long periods by "greedy" threads.
+
+A thread often acts in response to the action of another thread. If the other thread's action is also a response to the action of another thread, then *livelock* may result. As with deadlock, *livelocked* threads are unable to make further progress. 
