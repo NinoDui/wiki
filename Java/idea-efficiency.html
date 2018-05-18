@@ -1,0 +1,145 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <link rel="Stylesheet" type="text/css" href="/wiki/static/css/style.css">
+    <link rel="Stylesheet" type="text/css" href="/wiki/static/css/tango.css">
+    <link rel="shortcut icon" href="/wiki/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/wiki/favicon.ico" type="image/x-icon">
+    <link rel="alternate" type="application/atom+xml" href="atom.xml" title="Atom feed">
+    <title>IDEA-Efficiency - Learning Notes of NinoDui</title>
+    <meta name="keywords" content="Java, Python, MapReduce, Spark, AWS"/>
+    <meta name="description" content="An ample-oriented collection of learning pieces."/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  </head>
+
+  <body>
+    <div id="container">
+      
+<div id="header">
+  <div class="post-nav"><a href="/wiki/">Home</a>&nbsp;&#187;&nbsp;<a href="/wiki/#Java">Java</a>&nbsp;&#187;&nbsp;IDEA-Efficiency
+    <span class="updated">Page Updated&nbsp;
+      2018-05-18 16:05
+    </span></div>
+</div>
+<div class="clearfix"></div>
+
+<div class="page_title">IDEA-Efficiency</div>
+
+  <h1 id="idea-efficient-programming">IDEA Efficient Programming</h1>
+<h2 id="ide-autocompletion">IDE autocompletion</h2>
+<p>==Refactor==&gt;</p>
+<p><code>String</code> A + B ==alt + enter==&gt; <code>StringBuilder/format</code>/etc...</p>
+<p>==TAB==&gt;</p>
+<p>==ctrl + N==&gt; create methods, etc...</p>
+<h2 id="refactor-keys">Refactor Keys</h2>
+<p><strong>Extract the value and refactor as a new element</strong></p>
+<p>Command + Alt +<br />
+- <code>V</code> extract variable<br />
+- <code>P</code> extract parameter<br />
+- <code>C</code> const<br />
+- <code>F</code> field<br />
+- <code>M</code> method<br />
+- <code>N</code> inline (in opposite to <code>M</code>)</p>
+<p>F6<br />
+- <code>F6</code> Move the method to ...<br />
+- <code>Shift + F6</code> Rename<br />
+- <code>Command + F6</code> Reset the attribute of a method</p>
+<p>Command + Alt + Shift + T<br />
+<strong>Refactor ALL, Omega Boss</strong></p>
+<h2 id="efficient-tips">Efficient Tips</h2>
+<h3 id="sublime-text-selection">Sublime Text Selection</h3>
+<p>ctrl + <code>J</code> ==&gt; <strong>column selection</strong><br />
+Command + <code>W</code> ==&gt; select multi-fields</p>
+<h3 id="template">Template</h3>
+<p>Command + Alt + T ==&gt; Live Template<br />
+Ctrl + N ==&gt; File Template</p>
+<h3 id="plugin">Plugin</h3>
+<p>String Manipulation</p>
+<h2 id="navigation-key">Navigation Key</h2>
+<p>N ==&gt; Navigation<br />
+- Command + N ==&gt;Find class<br />
+- Command + Shift + N ==&gt; Find File<br />
+- Command + Shift + Alt + N ==&gt; Find Symbol<br />
+- [Shift] * 2</p>
+<p>Command + Alt + left/right ==&gt; back to last <strong>seen</strong><br />
+Command + Shift + Delete ==&gt; back to last <strong>edited</strong></p>
+<p>Command + B ==&gt; find definition<br />
+Command + Alt + B ==&gt; find subclasses/submethods</p>
+<p>Alt + F1 ==&gt;<br />
+F2 ==&gt; next error/warning<br />
+Shift + F2 ==&gt; previous error/warning</p>
+<h2 id="debug-keys">Debug keys</h2>
+<ul>
+<li>F7 ==&gt; Step in (Shift + F7 ==&gt; Intelligent Step in)</li>
+<li>F8 ==&gt; Step out</li>
+<li>F9 ==&gt; Debug</li>
+<li>F10 ==&gt; Run</li>
+</ul>
+<h2 id="practical-key">Practical Key</h2>
+<p>Command + W (press multiple times to expand the slope, Shift in reverse) ==&gt; select a word<br />
+Command + Shift + V ==&gt; extract the historical slots<br />
+<strong>Command + Shift + Enter</strong> ==&gt;<br />
+Command + Alt + T ==&gt; surrounding template<br />
+Command + Alt + O ==&gt; remove unnecessary imports<br />
+Command + Alt + L ==&gt; Format Code<br />
+Command + D ==&gt;<br />
+Command + Shift + A ==&gt; Omega Boss, seek for all!</p>
+<h2 id="idea-efficient-functions">IDEA Efficient Functions</h2>
+<h3 id="diff">Diff</h3>
+<p>Command + D</p>
+<p>Support<br />
+- <code>.java</code><br />
+- folder<br />
+- <code>.jar</code></p>
+<h3 id="regex-check">Regex Check</h3>
+<p>Alt + Enter --&gt; [Check RepExp]...</p>
+<h3 id="language-injection">Language Injection</h3>
+<p>Alt + Enter --&gt; [Language Injection] (e.g. json)</p>
+<h3 id="local-history">Local History</h3>
+<p>VCS --&gt; Local History</p>
+<h2 id="debug">Debug</h2>
+<h3 id="breakpoints">Breakpoints</h3>
+<ol>
+<li>Line Breakpoints</li>
+<li>Method Breakpoints (could be applied to parent method)</li>
+<li>Exception Breakpoints</li>
+<li>Field Breakpoints (stop when <code>set/get</code> is called, <code>set</code> by default)</li>
+<li>Condition Breakpoints</li>
+<li>Run-once Breakpoints (Press Alt when set the Breakpoints, temporarily)</li>
+</ol>
+<h3 id="expression-evaluation">Expression Evaluation</h3>
+<h3 id="deprecate-frame">Deprecate Frame</h3>
+<ul>
+<li>Drop Frame (back to the point which has run over in the frame stack)</li>
+<li>Throw Exception / Force Return</li>
+<li>...</li>
+</ul>
+<h3 id="auto-reload-changed-classes">Auto reload changed classes</h3>
+<p><to be added></p>
+<h3 id="lambda-debug">Lambda Debug</h3>
+<p>Trace current stream chain</p>
+<h3 id="lombok-debug-presude-requirement">Lombok Debug (presude requirement)</h3>
+<p>add Breakpoints to the annotation<br />
+or<br />
+Refactor --&gt; unbox lombok</p>
+  <div class="relation">
+    <h2>Related</h2>
+    <ul>
+    
+    <li><a href="/wiki/Java/java-concurrency.html">Java-Concurrency</a></li>
+    
+    </ul>
+  </div>
+    </div>
+    <div id="footer">
+      <span>
+        <p>Copyright © 2018 NinoDui.
+        Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
+        <p>Site Generated 2018-05-18 17:04:51</p>
+      </span>
+    </div>
+
+    
+    
+  </body>
+</html>

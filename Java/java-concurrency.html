@@ -68,6 +68,19 @@
 <li><a href="#lock-objects">Lock Objects</a></li>
 </ul>
 </li>
+<li><a href="#executors">Executors</a><ul>
+<li><a href="#executor-interfaces">Executor Interfaces</a><ul>
+<li><a href="#executor">Executor</a></li>
+<li><a href="#executorservice">ExecutorService</a></li>
+<li><a href="#scheduledexecutorservice">ScheduledExecutorService</a></li>
+</ul>
+</li>
+<li><a href="#thread-pools">Thread Pools</a><ul>
+<li><a href="#_1"></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -401,12 +414,56 @@ and then invoke <code>Thread.start</code></p>
     <span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
+
+
+<h2 id="executors">Executors</h2>
+<p>Objects that encapsulate functions to separate thread management and creation from the rest of the application are known as <em>executors</em>.</p>
+<h3 id="executor-interfaces">Executor Interfaces</h3>
+<p>In <code>java.util.concurrent</code> defines <strong>three</strong> executor interfaces:<br />
+- <code>Executor</code>, a simple interface that supports launching new tasks.<br />
+- <code>ExecutorService</code>, a subinterface of <code>Executor</code>, which adds features that help manage the lifecycle, both of the individual tasks and of the executor itself.<br />
+- <code>ScheduledExecutorService</code>, a subinterface of ExecutorService, supports future and/or periodic execution of tasks.</p>
+<h4 id="executor">Executor</h4>
+<div class="hlcode"><pre><span class="o">(</span><span class="k">new</span> <span class="n">Thread</span><span class="o">(</span><span class="n">r</span><span class="o">)).</span><span class="na">start</span><span class="o">();</span>
+</pre></div>
+
+
+<p>equals to</p>
+<div class="hlcode"><pre><span class="n">e</span><span class="p">.</span><span class="n">execute</span><span class="p">(</span><span class="n">r</span><span class="p">);</span>
+</pre></div>
+
+
+<h4 id="executorservice">ExecutorService</h4>
+<p>The <code>ExecutorService</code> interface supplements <code>execute</code> with a similar, but more versatile <code>submit</code> method, which<br />
+- accepts <code>Runnable</code> (like <code>execute</code> in <code>Executor</code>)<br />
+- accepts <code>Callable</code> (allow a task to return a value)<br />
+- returns a <code>Future</code> Object (used to retrieve the <code>Callable</code> return value and to manage the status of both <code>Callable</code> and <code>Runnable</code> tasks.)<br />
+- provides methods for submitting <strong>large collections</strong> of <code>Callable</code> objects<br />
+- provides a number of methods for managing the <strong>shutdown of the <code>executor</code></strong></p>
+<h4 id="scheduledexecutorservice">ScheduledExecutorService</h4>
+<p>The <code>ScheduledExecutorService</code> interface<br />
+- supplements the methods of its parent ExecutorService with <code>schedule</code>, which executes a <code>Runnable</code> or <code>Callable</code> task <strong>after a specified delay</strong>.<br />
+- defines <code>scheduleAtFixedRate</code> and <code>scheduleWithFixedDelay</code>, which executes specified tasks repeatedly, at defined intervals.</p>
+<h3 id="thread-pools">Thread Pools</h3>
+<p>A simple way to create an executor that uses a fixed thread pool is to invoke the <code>newFixedThreadPoo</code>l factory method in <code>java.util.concurrent.Executors</code> This class also provides the following factory methods:<br />
+1. The <code>newCachedThreadPool</code> method creates an executor with an expandable thread pool. This executor is suitable for applications that launch many short-lived tasks.<br />
+2. The <code>newSingleThreadExecutor</code> method creates an executor that <strong>executes a single task at a time</strong>.<br />
+3. Several factory methods are <code>ScheduledExecutorService</code> versions of the above executors.</p>
+<h4 id="_1"></h4>
+  <div class="relation">
+    <h2>Related</h2>
+    <ul>
+    
+    <li><a href="/wiki/Java/idea-efficiency.html">IDEA-Efficiency</a></li>
+    
+    </ul>
+  </div>
     </div>
     <div id="footer">
       <span>
         <p>Copyright © 2018 NinoDui.
         Powered by <a href="http://simiki.org/" target="_blank">Simiki</a>.</p>
-        <p>Site Generated 2018-05-07 15:27:27</p>
+        <p>Site Generated 2018-05-18 17:04:51</p>
       </span>
     </div>
 
